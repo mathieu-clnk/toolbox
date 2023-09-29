@@ -1,0 +1,2 @@
+# shell-library
+Let's share useful commands rather than keeping them under a notepad :)
