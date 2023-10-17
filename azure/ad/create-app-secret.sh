@@ -11,7 +11,7 @@ usage() {
 }
 
 create_secret() {
-  az ad app reset --display-name ${DISPLAY_NAME} --id ${APP_ID} --end-date "${EXPIRATION}"
+  az ad app credential reset --display-name ${DISPLAY_NAME} --id ${APP_ID} --end-date "${EXPIRATION}"
 }
 
 die() {
