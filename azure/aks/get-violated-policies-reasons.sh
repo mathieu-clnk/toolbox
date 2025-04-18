@@ -1,7 +1,6 @@
 #!/bin/bash
 
 get_default() {
-  echo -e "kind\t\tname\t\tenforcement\t\tviolations\t\tassignment-id\t\t\t\t\tdefinition-id\t\t\t\t\tsetdefinition-id"
   for crd in $(kubectl get crd -l managed-by=azure-policy-addon -o custom-columns="CRD-NAME":.metadata.name --no-headers)
   do
     kind=$(kubectl get crd ${crd} -o custom-columns="KIND":.spec.names.kind --no-headers)
