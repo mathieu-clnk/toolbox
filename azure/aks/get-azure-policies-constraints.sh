@@ -5,7 +5,7 @@ get_default() {
   for crd in $(kubectl get crd -l managed-by=azure-policy-addon -o json | jq -r ".items[].metadata.name")
   do
     kind=$(kubectl get crd ${crd} -o json|jq -r ".spec.names.kind")
-    kubectl get ${kind} -o json| jq '.items[] | { "kind": .kind, "name": .metadata.name, "enforcement": .spec.enforcementAction }' && echo ","
+    kubectl get ${kind} -o json| jq '.items[] | { "kind": .kind, "name": .metadata.name, "enforcement": .spec.enforcementAction, "violations": .status.totalViolation }' && echo ","
   done
   echo "]"
 }
