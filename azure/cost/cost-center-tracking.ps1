@@ -1,0 +1,2 @@
+$List = az graph query --graph-query "resourcecontainers| where type == 'microsoft.resources/subscriptions'| where properties.state == 'Enabled' | project CostCenter = tags['CostCenter'] | summarize count() by tostring(CostCenter)" | ConvertFrom-Csv
+Write-Output $List

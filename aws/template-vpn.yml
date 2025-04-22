@@ -1,0 +1,127 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: monitoring of AWS Site-to-site VPN and send alerts to SNS with lambda function, cloudwatch event and an iam role.
+Metadata: 
+  AWS::CloudFormation::Interface: 
+    ParameterGroups: 
+      - Label: 
+          default: "Lambda configuration"
+        Parameters: 
+          - lambdafunctionName
+          - S3bucketName
+          - S3bucketObject
+          - handler
+      - Label:
+          default: "Cloudwatch Event configuration"
+          Parameters:
+            - cloudwatchEventName
+            - cron
+            - inputVPNandSNS
+Parameters:
+  lambdafunctionName: 
+    Default: vpn-alert
+    Description: Name of lambda function
+    Type: String
+    ConstraintDescription: Use only letters, numbers, hyphens, or underscores with no spaces.
+  S3bucketName:
+    Description: Name of S3 bucket in which the code for lambda function is stored
+    Type: String
+  S3bucketObject:
+    Description: Name of S3 zip folder or file in which the code for lambda function is stored. for eg, test.zip, vpn-alert.py.zip
+    Type: String    
+  handler:
+    Description: Name of the handler in lambda function. eg, vpn-alert.lambda_handler where vpn-alert is the name of the file in which code is written.
+    Default: vpn-alert.lambda_handler
+    Type: String
+  cloudwatchEventName:
+    Default: vpn-monitoring
+    Description: Name of Cloudwatch event
+    Type: String
+    ConstraintDescription: Maximum of 64 characters consisting of lower/upper case letters, ., -, _.  
+  cron:
+    Default: cron(*/5 * * * ? *)
+    Description: Schedule of Cloudwatch event
+    Type: String
+    ConstraintDescription: CRON expression have six required fields, which are separated by white space
+  inputVPNandSNS:
+    Default: '{ "vpns": [ {  "name" : "vpn1-name",      "active_tunnels" : "1"   } ], "topic": "sns" }'
+    Description: Input json with list of vpn and active_tunnel
+    Type: String
+
+Resources:
+  VPNmonitoringRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: Lambdaexecutionrole
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: logs:CreateLogGroup
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*
+              - Effect: Allow
+                Action: 
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${lambdafunctionName}:*
+              - Effect: Allow
+                Action: 
+                  - SNS:Publish
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - EC2:DescribeVpnConnections
+                Resource: '*'
+  Lambdafunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Lambda function to monitor AWs site-to-site VPN
+      Code:
+        S3Bucket: !Ref S3bucketName
+        S3Key: !Ref S3bucketObject
+      Runtime: python3.6
+      FunctionName: !Ref lambdafunctionName
+      Timeout: 20
+      Role: !GetAtt VPNmonitoringRole.Arn
+      Handler: !Ref handler
+  Cloudwatchevent:
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: Rule for vpn monitoring
+      Name: !Ref cloudwatchEventName
+      ScheduleExpression: !Ref cron
+      State: ENABLED
+      Targets: 
+        - Arn: !GetAtt Lambdafunction.Arn
+          Id: !Ref lambdafunctionName
+          Input: !Ref inputVPNandSNS
+  Lambdapermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt Lambdafunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt Cloudwatchevent.Arn
+
+Outputs:
+  LambdaFnc:
+    Description: Information about the endpoint of Lambda.
+    Value: !GetAtt Lambdafunction.Arn
+  CloudwatchEventRule:
+    Description: Information about the endpoint of event.
+    Value: !Ref cloudwatchEventName
+  IamRole:
+    Description: Information about iam role created.
+    Value: !GetAtt VPNmonitoringRole.Arn
+
+
