@@ -11,7 +11,7 @@ die() {
 }
 get_storage() {
   echo "Get storage."
-  storage=$(az storage account show --name ${storage_name} --resource-group ${resource_group} || echo 0)
+  storage=$(az storage account show --name ${storage_name} --resource-group ${resource_group} 2>/dev/null|| echo 0)
   if [ "$(echo $storage|jq -r '.name' 2>/dev/null)" == "$storage_name" ]
   then
     export storage_id=$(echo $storage|jq -r '.id')
@@ -22,8 +22,8 @@ get_storage() {
 
 get_container() {
   echo "Get container."
-  container=$(az storage container show --name ${container_name} --account-name ${storage_name} --auth-mode login --timeout 5|| echo 0)
-  if [ "$(echo $container|jq -r '.name')" == "$container_name" ]
+  container=$(az storage container show --name ${container_name} --account-name ${storage_name} --auth-mode login --timeout 5 2>/dev/null|| echo 0)
+  if [ "$(echo $container|jq -r '.name' 2>/dev/null)" == "$container_name" ]
   then
     return 0
   fi
@@ -44,7 +44,7 @@ create_storage() {
 create_container() {
   echo "Create container."
   container=$(az storage container create --name ${container_name} --account-name ${storage_name} --auth-mode login --timeout 5|| echo 0)
-  if [ "$(echo $container|jq -r '.name' 2>/dev/null)" == "$container_name" ]
+  if [ "$(echo $container|jq -r '.created')" == "true" ]
   then
     return 0
   fi
@@ -53,7 +53,7 @@ create_container() {
 
 get_aks_oidc() {
   echo "Get the AKS of OIDC."
-  aks=$(az aks show --name ${aks_cluster} --resource-group ${resource_group} || echo 0)
+  aks=$(az aks show --name ${aks_cluster} --resource-group ${resource_group} 2>/dev/null|| echo 0)
   if [ "$(echo $aks|jq -r '.name' 2>/dev/null)" == "$aks_cluster" ]
   then
     export oidc_issuer=$(echo $aks|jq -r '.oidcIssuerProfile.issuerUrl')
@@ -64,7 +64,7 @@ get_aks_oidc() {
 
 get_identity() {
   echo "Get workload get_identity."
-  identity=$(az identity show --name ${manage_identity} --resource-group ${resource_group} || echo 0)
+  identity=$(az identity show --name ${manage_identity} --resource-group ${resource_group} 2>/dev/null|| echo 0)
   if [ "$(echo $identity|jq -r '.name' 2>/dev/null)" == "$manage_identity" ]
   then
     export app_principalId=$(echo $identity|jq -r '.principalId')
@@ -79,6 +79,7 @@ create_identity() {
   identity=$(az identity create --name ${manage_identity} --resource-group ${resource_group} || echo 0)
   if [ "$(echo $identity|jq -r '.name')" == "$manage_identity" ]
   then
+    echo "Create federated."
     federated=$(az identity federated-credential create --identity-name ${manage_identity} --resource-group ${resource_group} --name app1 --issuer $oidc_issuer --subject "system:serviceaccount:app1:sa1" --audiences "api://AzureADTokenExchange")
     if [ "$(echo $federated|jq -r '.name')" == "app1" ]
     then
@@ -95,11 +96,7 @@ create_identity() {
 
 create_assignment() {
   echo "Create assignment."
-  a1_id=$(az role assignment list --role "Storage Account Contributor" --scope ${storage_id} --assignee ${app_principalId} --query "[0].principalId" --output tsv)
-  if [ "${a1_id}" != "${app_principalId}" ]
-  then
-    a1=$(az role assignment create --role "Storage Account Contributor" --scope ${storage_id} --assignee-object-id ${app_principalId} ) || return 1
-  fi
+  sleep 20
   a2_id=$(az role assignment list --role "Storage Blob Data Contributor" --scope ${storage_id} --assignee ${app_principalId} --query "[0].principalId" --output tsv)
   if [ "${a2_id}" != "${app_principalId}" ]
   then
