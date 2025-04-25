@@ -5,7 +5,7 @@ metadata:
   name: sc-fuse
 provisioner: blob.csi.azure.com
 parameters:
-  protocol: fuse
+  protocol: fuse2
   resourceGroup: STORAGE_RESOURCE_GROUP_TO_REPLACE
   storageAccount: STORAGE_ACCOUNT_TO_REPLACE
   containerName: CONTAINER_NAME_TO_REPLACE
