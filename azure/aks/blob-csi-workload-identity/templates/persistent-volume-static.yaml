@@ -10,7 +10,7 @@ spec:
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: blob-fuse
+  storageClassName: sc-fuse
   mountOptions:
     - -o allow_other
     - --file-cache-timeout-in-seconds=120

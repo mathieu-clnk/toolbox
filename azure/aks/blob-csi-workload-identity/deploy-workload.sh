@@ -5,11 +5,16 @@ resource_group="rsg-demo-1857"
 manage_identity="midapp1demo"
 aks_cluster=""
 
+die() {
+  echo "ERROR: $1"
+  exit 1
+}
 get_storage() {
   echo "Get storage."
   storage=$(az storage account show --name ${storage_name} --resource-group ${resource_group} || echo 0)
-  if [ "$(echo $storage|jq -r '.name')" == "$storage_name" ]
+  if [ "$(echo $storage|jq -r '.name' 2>/dev/null)" == "$storage_name" ]
   then
+    export storage_id=$(echo $storage|jq -r '.id')
     return 0
   fi
   return 1
@@ -39,7 +44,7 @@ create_storage() {
 create_container() {
   echo "Create container."
   container=$(az storage container create --name ${container_name} --account-name ${storage_name} --auth-mode login --timeout 5|| echo 0)
-  if [ "$(echo $container|jq -r '.name')" == "$container_name" ]
+  if [ "$(echo $container|jq -r '.name' 2>/dev/null)" == "$container_name" ]
   then
     return 0
   fi
@@ -49,7 +54,7 @@ create_container() {
 get_aks_oidc() {
   echo "Get the AKS of OIDC."
   aks=$(az aks show --name ${aks_cluster} --resource-group ${resource_group} || echo 0)
-  if [ "$(echo $aks|jq -r '.name')" == "$aks_cluster" ]
+  if [ "$(echo $aks|jq -r '.name' 2>/dev/null)" == "$aks_cluster" ]
   then
     export oidc_issuer=$(echo $aks|jq -r '.oidcIssuerProfile.issuerUrl')
     return 0
@@ -60,8 +65,10 @@ get_aks_oidc() {
 get_identity() {
   echo "Get workload get_identity."
   identity=$(az identity show --name ${manage_identity} --resource-group ${resource_group} || echo 0)
-  if [ "$(echo $identity|jq -r '.name')" == "$manage_identity" ]
+  if [ "$(echo $identity|jq -r '.name' 2>/dev/null)" == "$manage_identity" ]
   then
+    export app_principalId=$(echo $identity|jq -r '.principalId')
+    export app_client_id=$(echo $identity|jq -r '.clientId')
     return 0
   fi
   return 1
@@ -76,7 +83,7 @@ create_identity() {
     if [ "$(echo $federated|jq -r '.name')" == "app1" ]
     then
       export app_principalId=$(echo $identity|jq -r '.principalId')
-      export app_client_id=$(echo $identity|jq -r '.clientid')
+      export app_client_id=$(echo $identity|jq -r '.clientId')
       return 0
     else
       return 2
@@ -101,16 +108,19 @@ create_assignment() {
 }
 
 render_template() {
+  mkdir -p output
   echo "Render template."
-  cat storage-class.yaml | sed -e "s/STORAGE_RESOURCE_GROUP_TO_REPLACE/${resource_group}/g" \
+  cat templates/storage-class.yaml | sed -e "s/STORAGE_RESOURCE_GROUP_TO_REPLACE/${resource_group}/g" \
                           -e "s/STORAGE_ACCOUNT_TO_REPLACE/${storage_name}/g" \
                           -e  "s/CONTAINER_NAME_TO_REPLACE/${container_name}/g" > output/storage-class.yaml || return 1
-  cat service-account.yaml | sed -e "s/CLIENT_ID_TO_REPLACE/${app_client_id}/g" > output/service-account.yaml || return 1
-  cat persistent-volume-static.yaml | sed -e "s/CLIENT_ID_TO_REPLACE/${app_client_id}/g" > output/persistent-volume-static.yaml || return 1
+  cat templates/persistent-volume-static.yaml | sed -e "s/STORAGE_RESOURCE_GROUP_TO_REPLACE/${resource_group}/g" \
+                          -e "s/STORAGE_ACCOUNT_TO_REPLACE/${storage_name}/g" \
+                          -e  "s/CONTAINER_NAME_TO_REPLACE/${container_name}/g" \
+                          -e "s/CLIENT_ID_TO_REPLACE/${app_client_id}/g" > output/persistent-volume-static.yaml || return 1
 
 }
 
-if [ $aks_cluster == "" ]
+if [ "$aks_cluster" == "" ]
 then
   die "Please set the aks_cluster variable first."
 fi
