@@ -37,7 +37,7 @@ The files have been generated, we just need to connect to the new cluster and de
 # This system identity is owner of the resource group.
 # The object id of this VM is 11111111-1111-1111-1111-111111111111
 aksID=$(az aks show --name aks-demo-2025050416111746375118 --resource-group rsg-demo-3432 --query "id" -o tsv)
-az role assignment create --role "Azure Kubernetes Service RBAC Cluster Admin" --scope ${aksID} --assignee-object-id $object-id --query "name" 
+az role assignment create --role "Azure Kubernetes Service RBAC Cluster Admin" --scope ${aksID} --assignee-object-id $object_id --query "name" 
 az aks get-credentials --resource-group rsg-demo-3432 --name aks-demo-2025050416111746375118 --overwrite-existing
 kubelogin convert-kubeconfig -l azurecli
 kubectl create ns app1
