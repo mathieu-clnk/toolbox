@@ -56,7 +56,8 @@ client_id=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.AzureStorageIdent
 storage_name=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.storageAccount")
 resource_group=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.resourceGroup")
 storage_id=$(az storage account show --name ${storage_name} --resource-group ${resource_group} --query "id" -o tsv)
-az role assignment list --scope ${storage_id} --assignee-object-id ${client_id} 
+principal_id=$(az identity list | jq -r '.[]|select(.clientId == "'$client_id'").principalId')
+az role assignment list --scope ${storage_id} | jq -r '.[]|select(.principalId == "'$principal_id'").roleDefinitionName'
 # As the deployment above is using a singe replica, we will check on which worker node it tries to run
 worker=$(kubectl -n app1 get po -l app=app1 -o custom-columns="node":.spec.nodeName --no-headers)
 csi_pod=$( kubectl -n kube-system get po -l app=csi-blob-node -o json| jq -r '.items[] | select(.spec.nodeName == "'$worker'").metadata.name')
