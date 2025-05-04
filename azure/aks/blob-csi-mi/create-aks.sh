@@ -14,8 +14,8 @@ die() {
 
 get_private_dns() {
  echo "Check if private DNS zone exists"
- zone=$(az network private-dns zone show --name aks-demo.privatelink.westeurope.azmk8s.io --resource-group ${resource_group} || echo 0)
- if [ "$(echo $zone|jq -r '.name')" == "aks-demo.privatelink.westeurope.azmk8s.io" ]
+ zone=$(az network private-dns zone show --name aks-demo.privatelink.westeurope.azmk8s.io --resource-group ${resource_group} 2> /dev/null || echo 0)
+ if [ "$(echo $zone|jq -r '.name' 2> /dev/null)" == "aks-demo.privatelink.westeurope.azmk8s.io" ]
   then
     export zone_id=$(echo $zone|jq -r '.id')
     return 0
@@ -25,7 +25,7 @@ get_private_dns() {
 
 create_private_dns() {
   echo "Creating private DNS zone."
-  zone=$(az network private-dns zone create --name aks-demo.privatelink.westeurope.azmk8s.io --resource-group ${resource_group} ) || return 1
+  zone=$(az network private-dns zone create --name aks-demo.privatelink.westeurope.azmk8s.io --resource-group ${resource_group}) || return 1
   if [ "$(echo $zone|jq -r '.name')" == "aks-demo.privatelink.westeurope.azmk8s.io" ]
   then
     export zone_id=$(echo $zone|jq -r '.id')
@@ -36,8 +36,8 @@ create_private_dns() {
 
 get_cluster_managed_identity() {
   echo "Get AKS managed identity."
-  mid=$(az identity show --name mid-aks-demo --resource-group ${resource_group} || echo 0 )
-  if [ "$(echo $mid|jq -r '.name')" == "mid-aks-demo" ]
+  mid=$(az identity show --name mid-aks-demo --resource-group ${resource_group} 2> /dev/null|| echo 0 )
+  if [ "$(echo $mid|jq -r '.name' 2> /dev/null)" == "mid-aks-demo" ]
   then
     export aks_mid_principalId=$(echo $mid|jq -r '.principalId')
     export aks_mid_id=$(echo $mid|jq -r '.id')
