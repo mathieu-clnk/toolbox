@@ -52,9 +52,9 @@ kubectl apply -f deployment-mi.yaml
 kubectl -n app1 get po
 kubectl -n app1 get pvc
 kubectl get sc
-client_id=$(kubectl get sc sc-fuse -o json| jq ".parameters.AzureStorageIdentityClientID")
-storage_name=$(kubectl get sc sc-fuse -o json| jq ".parameters.storageAccount")
-resource_group=$(kubectl get sc sc-fuse -o json| jq ".parameters.resourceGroup")
+client_id=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.AzureStorageIdentityClientID")
+storage_name=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.storageAccount")
+resource_group=$(kubectl get sc sc-fuse -o json| jq -r ".parameters.resourceGroup")
 storage_id=$(az storage account show --name ${storage_name} --resource-group ${resource_group} --query "id" -o tsv)
 az role assignment list --scope ${storage_id} --assignee-object-id ${client_id} 
 # As the deployment above is using a singe replica, we will check on which worker node it tries to run
