@@ -92,8 +92,12 @@ render_template() {
   echo "Render template."
   cat templates/storage-class.yaml | sed -e "s/STORAGE_RESOURCE_GROUP_TO_REPLACE/${resource_group}/g" \
                           -e "s/STORAGE_ACCOUNT_TO_REPLACE/${storage_name}/g" \
-                          -e  "s/CONTAINER_NAME_TO_REPLACE/${container_name}/g" > output/storage-class.yaml \
+                          -e  "s/CONTAINER_NAME_TO_REPLACE/${container_name}/g" \
                           -e "s/CLIENT_ID_TO_REPLACE/${app_client_id}/g" > output/storage-class.yaml  || return 1
+
+  cat templates/persistence-volume-static.yaml | sed -e "s/STORAGE_RESOURCE_GROUP_TO_REPLACE/${resource_group}/g" \
+                          -e "s/STORAGE_ACCOUNT_TO_REPLACE/${storage_name}/g" \
+                          -e  "s/CONTAINER_NAME_TO_REPLACE/${container_name}/g" > output/persistence-volume-static.yaml  || return 1
 
 }
 
