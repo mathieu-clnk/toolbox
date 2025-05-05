@@ -46,7 +46,7 @@ kubectl apply -f persistent-volume-claim.yaml
 kubectl apply -f deployment-mi.yaml
 kubectl apply -f output/persistence-volume-static.yaml
 kubectl apply -f persistent-volume-claim-static.yaml
-kubectl apply -f deployment-mi.yaml
+kubectl apply -f deployment-static-mi.yaml
 ```
 
 ### Troubleshooting
