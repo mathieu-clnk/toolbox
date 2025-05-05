@@ -52,6 +52,7 @@ kubectl apply -f deployment-static-mi.yaml
 ### Troubleshooting
 
 ```bash
+kubectl get csidriver blob.csi.azure.com -o yaml
 kubectl -n app1 get po
 kubectl -n app1 get pvc
 kubectl get sc
