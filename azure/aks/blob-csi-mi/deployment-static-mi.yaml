@@ -5,7 +5,7 @@ metadata:
   labels:
     app: app1-static
   name: deploy-static-mi
-  namespace: app1-static
+  namespace: app1
 spec:
   replicas: 1
   selector:
