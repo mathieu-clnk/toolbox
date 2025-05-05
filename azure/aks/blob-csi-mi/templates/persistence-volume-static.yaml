@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-blob-static-mi
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain  # If set as "Delete" container would be removed after pvc deletion
+  storageClassName: blob-fuse
+  mountOptions:
+    - -o allow_other
+    - --file-cache-timeout-in-seconds=120
+  csi:
+    driver: blob.csi.azure.com
+    readOnly: false
+    # make sure this volumeid is unique in the cluster
+    volumeHandle: "STORAGE_RESOURCE_GROUP_TO_REPLACE#STORAGE_ACCOUNT_TO_REPLACE#CONTAINER_NAME_TO_REPLACE"
+    volumeAttributes:
+      protocol: fuse2
+      resourceGroup: STORAGE_RESOURCE_GROUP_TO_REPLACE
+      storageAccount: STORAGE_ACCOUNT_TO_REPLACE
+      containerName: CONTAINER_NAME_TO_REPLACE
+      AzureStorageAuthType: MSI
+      AzureStorageIdentityClientID: CLIENT_ID_TO_REPLACE
