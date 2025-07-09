@@ -88,7 +88,7 @@ create_aks() {
   subnet_id=$(az network vnet subnet show --vnet-name ${vnet_name} --name ${subnet} --resource-group ${resource_group}  --query "id" --output tsv )
   aks=$(az aks create --name aks-demo-${name_suffix} --resource-group ${resource_group} --enable-workload-identity --enable-oidc-issuer \
                       --enable-private-cluster --enable-managed-identity --enable-blob-driver --enable-azure-rbac --disable-local-accounts \
-                      --assign-identity ${aks_mid_id} --outbound "userDefinedRouting" --pod-cidr "172.28.0.0/16" \
+                      --assign-identity ${aks_mid_id} --outbound "userDefinedRouting" --pod-cidr "172.28.0.0/16" --node-count 1\
                       --private-dns-zone ${zone_id} --service-cidr "172.21.0.0/16" --dns-service-ip "172.21.0.10" --tier standard --vnet-subnet-id ${subnet_id} --generate-ssh-keys --enable-aad --yes)
   if [ "$(echo $aks|jq -r '.name')" == "aks-demo-${name_suffix}" ]
   then
